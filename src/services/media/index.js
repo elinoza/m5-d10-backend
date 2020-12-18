@@ -1,16 +1,15 @@
 const express = require("express")
-
+const multer = require("multer")
 const uniqid = require("uniqid")
 const { join } = require("path")
-const { createReadStream } = require("fs-extra")
+const { createReadStream ,writeFile } = require("fs-extra")
 const { Transform } = require("json2csv")
+const path = require("path")
+const upload = multer({})
 const { pipeline } = require("stream")
-
 const sgMail = require("@sendgrid/mail")
-
-
+const mediaFolderPath = path.join(__dirname, "../../../public/img/media")
 const { getmedia, writemedia } = require("../../fsUtilities")
-
 const mediaRouter = express.Router()
 
 
@@ -169,7 +168,7 @@ mediaRouter.get("/:imdbID", async (req, res, next) => {
   
       if (mediaFound) {
         console.log(mediaFound)
-        mediaFound.review.push({_id:uniqid(),...req.body,elementId:req.params.imdbID,createdAt:new Date()})
+        mediaFound.review.push({_id:uniqid(),...req.body,elementId:req.params.imdbID,createdAt:new Date(),Poster:'',})
       await writemedia(media)
       res.status(201).send("review has been posted successfully!")
         
@@ -247,6 +246,27 @@ mediaRouter.delete(
   }
 )
 
+//UPLOAD IMAGE
+mediaRouter.post("/:imdbID/upload", upload.single("movie"), async (req, res,next) => {
+  try{
+    
+    await writeFile(
+      path.join(mediaFolderPath, req.params.imdbID + ".jpg"),
+      req.file.buffer
+      )
+     
+     const media = await getmedia()
+     const updated = media.map(media => media._imdbID ===req.params.imdbID ? {...media, Poster: req.params.imdbID + ".jpg"}: media)
+    
+     await writemedia(updated )
+     res.send("ok")
+   
+}
+catch(error){
+  console.log(error)
+  next(error)
+}
+})
   
 
 //CSV EXPORT
@@ -256,7 +276,7 @@ mediaRouter.get("/csv",async (req,res,next)=> {
     const jsonReadableStream = createReadStream(path)
 
     const json2csv = new Transform({
-      fields: ["Title",  "Year", "imdbID","Type","review","Poster"],
+      fields: ["Title",  "Year", "imdbimdbID","Type","review","Poster"],
     })
     
 
@@ -292,5 +312,7 @@ mediaRouter.post("/send", async (req, res, next) => {
     next(error)
   }
 })
+
+
 
 module.exports = mediaRouter
