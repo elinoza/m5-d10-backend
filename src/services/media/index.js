@@ -13,8 +13,6 @@ const { getmedia, writemedia } = require("../../fsUtilities")
 const mediaRouter = express.Router()
 
 
-
-
 //POST
 mediaRouter.post("/",async (req,res,next)=> {
 try{
@@ -167,8 +165,10 @@ mediaRouter.get("/:imdbID", async (req, res, next) => {
       const mediaFound = media.find(media => media.imdbID === req.params.imdbID)
   
       if (mediaFound) {
-        console.log(mediaFound)
-        mediaFound.review.push({_id:uniqid(),...req.body,elementId:req.params.imdbID,createdAt:new Date(),Poster:'',})
+        console.log(req.body)
+        
+        mediaFound.review.push({_id:uniqid(),...req.body,elementId:req.params.imdbID,createdAt:new Date()})
+        
       await writemedia(media)
       res.status(201).send("review has been posted successfully!")
         
