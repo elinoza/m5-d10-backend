@@ -134,7 +134,7 @@ mediaRouter.get("/:imdbID", async (req, res, next) => {
   })
 
 
-  ///CRUD FOR REVİEWS
+  ///CRUD FOR REVIEWS
 
   // GET /media/:imdbID/reviews
   mediaRouter.get("/:imdbID/reviews", async (req, res, next) => {
