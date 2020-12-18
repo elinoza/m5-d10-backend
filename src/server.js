@@ -3,7 +3,7 @@ const cors = require("cors")
 const listEndpoints = require("express-list-endpoints")
 
 
-const attendeesRoutes = require("./services/attendees")
+const mediaRoutes = require("./services/media")
 
 
 const {
@@ -39,7 +39,7 @@ server.use(cors()) // CROSS ORIGIN RESOURCE SHARING
 //ROUTES
 
 
-server.use("/attendees", attendeesRoutes)
+server.use("/media", mediaRoutes)
 
 
 // ERROR HANDLERS
