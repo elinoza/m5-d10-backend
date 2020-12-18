@@ -14,6 +14,8 @@ const { getmedia, writemedia } = require("../../fsUtilities")
 const mediaRouter = express.Router()
 
 
+
+
 //POST
 mediaRouter.post("/",async (req,res,next)=> {
 try{
@@ -92,14 +94,14 @@ mediaRouter.get("/:imdbID", async (req, res, next) => {
   
       const media= mediaDb.filter(media => media.imdbID !== req.params.imdbID)
   
-      const modifiedUser = {
+      const modifiedMedia = {
         ...req.body,
-        _id: req.params.id
+        imdbID: req.params.imdbID
        
       }
-      media.push(modifiedUser)
+      media.push(modifiedMedia)
       await writemedia(media)
-      res.send(modifiedUser)
+      res.send(modifiedMedia)
     }else {
       const error = new Error()
       error.httpStatusCode = 404
@@ -135,8 +137,117 @@ mediaRouter.get("/:imdbID", async (req, res, next) => {
   })
 
 
+  ///CRUD FOR REVİEWS
 
+  // GET /media/:imdbID/reviews
+  mediaRouter.get("/:imdbID/reviews", async (req, res, next) => {
+    try {
+      const media = await getmedia()
+  
+      const mediaFound = media.find(media => media.imdbID === req.params.imdbID)
+  
+      if (mediaFound) {
+        
+        res.send(mediaFound.review)
+      } else {
+        const err = new Error()
+        err.httpStatusCode = 404
+        next(err)
+      }
+    } catch (error) {
+      console.log(error)
+      next(error)
+    }
+  })
 
+  // POST /media/:imdbID/reviews
+  mediaRouter.post("/:imdbID/reviews", async (req, res, next) => {
+    try {
+      const media = await getmedia()
+  
+      const mediaFound = media.find(media => media.imdbID === req.params.imdbID)
+  
+      if (mediaFound) {
+        console.log(mediaFound)
+        mediaFound.review.push({_id:uniqid(),...req.body,elementId:req.params.imdbID,createdAt:new Date()})
+      await writemedia(media)
+      res.status(201).send("review has been posted successfully!")
+        
+      } else {
+        const err = new Error()
+        err.httpStatusCode = 404
+        next(err)
+      }
+    } catch (error) {
+      console.log(error)
+      next(error)
+    }
+  })
+
+  // PUT /media/:imdbID/reviews/:_id
+  mediaRouter.put("/:imdbID/reviews/:_id", async (req, res, next) => {
+    try {
+      const media = await getmedia()
+      const mediaIndex = media.findIndex(
+        media => media.imdbID === req.params.imdbID
+      )
+  
+        if (mediaIndex!==-1 ) {
+          const reviewIndex = media[mediaIndex].review.findIndex(
+            review => review._id === req.params._id
+          )
+          if (reviewIndex !== -1) {
+          const previousReview = media[mediaIndex].review[reviewIndex]
+
+              const updateReviews = [
+                ...media[mediaIndex].review.slice(0, reviewIndex),
+                { ...previousReview, ...req.body, updatedAt: new Date() },
+                ...media[mediaIndex].review.slice(reviewIndex + 1),
+              ]
+              media[mediaIndex].review = updateReviews
+              await writemedia(media)
+              res.send(media[mediaIndex])} else {
+                console.log("Review not found")
+              }
+        
+        } else {
+        console.log("media not found!")
+        }
+    } catch (error) {
+      console.log(error)
+      next(error)
+    
+  }
+})
+
+//DELETE
+mediaRouter.delete(
+  "/:imdbID/reviews/:_id",
+  async (req, res, next) => {
+    try {
+      const media = await getmedia()
+
+      const mediaIndex = media.findIndex(
+        media => media.imdbID === req.params.imdbID
+      )
+
+      if (mediaIndex !== -1) {
+        media[mediaIndex].review = media[mediaIndex].review.filter(
+          review => review._id !== req.params._id
+        )
+
+        await writemedia(media)
+        res.send(media[mediaIndex])
+      } else {
+      }
+    } catch (error) {
+      console.log(error)
+      next(error)
+    }
+  }
+)
+
+  
 
 //CSV EXPORT
 mediaRouter.get("/csv",async (req,res,next)=> {
@@ -145,8 +256,9 @@ mediaRouter.get("/csv",async (req,res,next)=> {
     const jsonReadableStream = createReadStream(path)
 
     const json2csv = new Transform({
-      fields: ["firstName", "secondName", "email", "id"],
+      fields: ["Title",  "Year", "imdbID","Type","review","Poster"],
     })
+    
 
     res.setHeader("Content-Disposition", "attachment; filename=export.csv")
     pipeline(jsonReadableStream, json2csv, res, err => {

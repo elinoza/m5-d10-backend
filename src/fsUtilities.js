@@ -4,6 +4,7 @@ const { join } = require("path")
 
 const mediaPath = join(__dirname, "./services/media/media.json")
 
+
 const readDB = async filePath => {
   try {
     const fileJson = await readJSON(filePath)
