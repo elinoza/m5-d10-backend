@@ -34,7 +34,7 @@ server.use(express.json())
 //     }
 //   },
 //}
-server.use(cors()) // CROSS ORIGIN RESOURCE SHARING
+server.use(cors())
 
 //ROUTES
 
