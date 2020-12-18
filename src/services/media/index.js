@@ -28,7 +28,7 @@ try{
     error.message = "media already in db"
     next(error)
   } else {
-    media.push({...req.body,comments:[]})
+    media.push({...req.body,comments:[],Poster:``})
     await writemedia(media)
     res.status(201).send("media s been posted successfully!")
   }}
@@ -256,8 +256,8 @@ mediaRouter.post("/:imdbID/upload", upload.single("movie"), async (req, res,next
       )
      
      const media = await getmedia()
-     const updated = media.map(media => media._imdbID ===req.params.imdbID ? {...media, Poster: req.params.imdbID + ".jpg"}: media)
-    
+     const updated = media.map(media => media.imdbID ===req.params.imdbID ? {...media, Poster:`${req.params.imdbID}.jpg`}: media)
+    console.log(updated)
      await writemedia(updated )
      res.send("ok")
    
